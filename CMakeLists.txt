@@ -23,7 +23,10 @@ if(NOT Eigen3_FOUND)
     message(FATAL_ERROR "\n Eigen 3 NOT FOUND \n")
 endif()
 find_package(PCL 1.6 REQUIRED)
-find_package(OpenCV 3 REQUIRED)
+find_package(OpenCV)
+if(OpenCV_FOUND)
+    message("\n OpenCV Version ${OpenCV_VERSION} FOUND \n")
+endif()
 include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
 ## System dependencies are found with CMake's conventions

@@ -36,14 +36,17 @@ sensor_msgs::PointCloud2::Ptr depth_to_pointcloud(const sensor_msgs::ImageConstP
   sensor_msgs::PointCloud2Modifier pcd_modifier(*cloud_msg);
   pcd_modifier.setPointCloud2FieldsByString(1, "xyz");
 
-  std::cout << "Undistort Depth Image" << std::endl;
-  //to cv::mat type
   cv_bridge::CvImagePtr imPtr = cv_bridge::toCvCopy(dimg);
+  //realsense depth images seem to be rectified beforehand
+  /*
+  std::cout << "Rectify Depth Image" << std::endl;
   cv::Mat rect;
   cam_model_ptr->rectifyImage(imPtr->image,rect,0);
+  */
 
   //back to ROS msg
-  cv_bridge::CvImage rectCV(imPtr->header,imPtr->encoding,rect);
+  //cv_bridge::CvImage rectCV(imPtr->header,imPtr->encoding,rect);
+  cv_bridge::CvImage rectCV(imPtr->header,imPtr->encoding,imPtr->image);
   auto rectMsg = rectCV.toImageMsg();
 
   std::cout << "Converting Depth Image to PointCloud" << std::endl;
@@ -76,7 +79,7 @@ int main(int argc, char** argv)
   std::cout << "\tDepth Image to PointCloud" << std::endl;
   ros::init(argc, argv, "Depth2PCD");
   ros::NodeHandle nh;
-  ros::Rate rate(10); //200 hz
+  ros::Rate rate(10); //10 hz
   ros::Duration(1.0).sleep(); //for debug attach
 
   //for visualize purpose
@@ -84,13 +87,13 @@ int main(int argc, char** argv)
           ("/depthImg_pcd",2);
 
   // Need to use the topic name that's to be subscribed
-  const sensor_msgs::CameraInfoConstPtr& cam_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/depth/camera_info",nh);
+  const sensor_msgs::CameraInfoConstPtr& cam_info = ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera/depth/camera_info",nh);
   image_geometry::PinholeCameraModel cam_model;
   cam_model.fromCameraInfo(cam_info);
   cam_model_ptr = &cam_model;
 
   //get depth image
-  auto depthMsg = ros::topic::waitForMessage<sensor_msgs::Image>("/depth/image_raw");
+  auto depthMsg = ros::topic::waitForMessage<sensor_msgs::Image>("/camera/depth/image_rect_raw",nh);
   auto pcd = depth_to_pointcloud(depthMsg);
 
   //for visualize purpose
